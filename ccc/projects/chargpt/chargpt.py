@@ -3,16 +3,14 @@ Trains a character-level language model.
 """
 import os
 import sys
-sys.path.append('../../')
-print(sys.path)
 
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 
-from mingptx.model import GPT
-from mingptx.trainer import Trainer
-from mingptx.utils import set_seed, setup_logging, CfgNode as CN
+from mingpt.model import GPT
+from mingpt.trainer import Trainer
+from mingpt.utils import set_seed, setup_logging, CfgNode as CN
 
 # -----------------------------------------------------------------------------
 
