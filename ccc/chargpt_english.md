@@ -1,20 +1,6 @@
 ## english.txt
 
 ```
-    return forward_call(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\ccc\code\py\mingpt\mingpt\model.py", line 91, in forward
-    x = x + self.attn(self.ln_1(x))
-            ^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\user\AppData\Local\Programs\Python\Python311\Lib\site-packages\torch\nn\modules\module.py", line 1501, in _call_impl
-    return forward_call(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "d:\ccc\code\py\mingpt\mingpt\model.py", line 62, in forward
-    att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-                                                       ^^^^^^^^^^
-KeyboardInterrupt
-
-ccckmit@asus MINGW64 /d/ccc/code/py/minGPT/ccc/projects/chargpt (master)
 $ python chargpt.py english.txt
 system:
     seed: 3407
