@@ -1,5 +1,3 @@
-# chargpt.py
-
 ## qa.txt
 
 ```
