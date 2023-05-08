@@ -1,5 +1,15 @@
 # demo.py
 
+讓 GPT 學習 0,1,2 所組成的 5 個數字之排序。
+
+例如：
+
+```
+input sequence  : [[0, 0, 2, 1, 0, 1]]
+predicted sorted: [[0, 0, 0, 1, 1, 2]]
+```
+
+## 執行結果
 
 ```
 ccckmit@asus MINGW64 /d/ccc/code/py/minGPT (master)

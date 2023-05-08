@@ -1,10 +1,11 @@
 """
 Full definition of a GPT Language Model, all of it in this single file.
+(在此單一文件中，完整定義了 GPT 語言模型。)
 
-References:
-1) the official GPT-2 TensorFlow implementation released by OpenAI:
+References: (參考資料)
+1) the official GPT-2 TensorFlow implementation released by OpenAI: (在此單一文件中，完整定義了 GPT 語言模型。)
 https://github.com/openai/gpt-2/blob/master/src/model.py
-2) huggingface/transformers PyTorch implementation:
+2) huggingface/transformers PyTorch implementation: (huggingface/transformers 的 PyTorch 實現：)
 https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
 """
 
@@ -26,13 +27,22 @@ class NewGELU(nn.Module):
     def forward(self, x):
         return 0.5 * x * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * torch.pow(x, 3.0))))
 
+
 class CausalSelfAttention(nn.Module):
     """
     A vanilla multi-head masked self-attention layer with a projection at the end.
     It is possible to use torch.nn.MultiheadAttention here but I am including an
     explicit implementation here to show that there is nothing too scary here.
     """
-
+    """
+    CausalSelfAttention 是一個多頭自注意力機制，這裡使用的是一個基本的線性轉換矩陣 (self.c_attn) 
+    來得到 query, key, value 三個向量，然後將他們分割為多個頭，並進行矩陣運算來獲得多頭的輸出。
+    具體來說，該模型在執行過程中，將輸入 x 進行線性轉換，分成 query, key, value 三個向量，
+    再將它們分割成多個頭。然後，它使用遮罩來確保在計算注意力時，只會關注當前位置之前的部分。
+    該模型計算出注意力值，並將注意力值乘以 value，這樣就得到了經過注意力機制後的輸出。最後，
+    將這些輸出聚合在一起，再進行一個線性轉換，最終得到模型的輸出。值得注意的是，該模型在計算
+    過程中使用了一些 dropout 正則化手段。
+    """
     def __init__(self, config):
         super().__init__()
         assert config.n_embd % config.n_head == 0
@@ -50,6 +60,29 @@ class CausalSelfAttention(nn.Module):
         self.n_embd = config.n_embd
 
     def forward(self, x):
+        """
+        這是一個執行自注意力機制（self-attention mechanism）的函數，
+        用於一個 GPT 模型的一個子模塊中。
+
+        輸入 x 是一個形狀為 (batch_size, sequence_length, embedding_dimensionality) 
+        的張量，代表一個批次的序列，其中 embedding_dimensionality 是嵌入層的維度。
+        這個函數將使用自注意力機制來為這些嵌入向量中的每個位置生成一個新的嵌入向量。
+
+        這個函數首先使用一個線性變換 self.c_attn 將 x 轉換為一個形狀為 (batch_size, 
+        sequence_length, 3 * embedding_dimensionality) 的張量。然後這個張量被拆分為
+        三個形狀為 (batch_size, sequence_length, embedding_dimensionality) 
+        的張量 q、k 和 v，代表自注意力機制中的查詢、鍵和值。
+
+        接下來，這些張量 q、k 和 v 被切片並重新組合成多頭自注意力的形式，即分成 
+        self.n_head 個頭，每個頭的嵌入向量維度為 C // self.n_head。這樣，每個頭
+        都可以獨立地進行自注意力計算，然後將計算出的嵌入向量再次組合在一起。
+
+        然後，函數計算自注意力矩陣 att，用於在所有位置之間計算注意力分數。注意力
+        分數與鍵向量和查詢向量相乘後，經過緩慢的軟化函數（softmax）進行歸一化。
+        然後使用這些注意力分數加權鍵向量，得到新的值向量。最後，函數使用線性變換
+          self.c_proj 將新的值向量映射回原始嵌入維度，最終返回一個形狀為 
+          (batch_size, sequence_length, embedding_dimensionality) 的張量。        
+        """
         B, T, C = x.size() # batch size, sequence length, embedding dimensionality (n_embd)
 
         # calculate query, key, values for all heads in batch and move head forward to be the batch dim
@@ -73,6 +106,13 @@ class CausalSelfAttention(nn.Module):
 class Block(nn.Module):
     """ an unassuming Transformer block """
 
+    """
+    這是一個 Transformer block，由 self-attention 和 MLP 組成。在 forward 的時候，
+    會先將輸入的 x 經過 LayerNorm 後，再經過 CausalSelfAttention。接著，再加上 x，
+    再經過另一個 LayerNorm 後，再經過一個由 Linear、GELU 和 Dropout 組成的 MLP。
+    最後，再加上原本的 x 後，就是這個 block 的輸出。其中，config.n_embd 是 
+    embedding 的維度，config.resid_pdrop 是 dropout 的比例。
+    """
     def __init__(self, config):
         super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd)
@@ -92,9 +132,17 @@ class Block(nn.Module):
         x = x + self.mlpf(self.ln_2(x))
         return x
 
+
 class GPT(nn.Module):
     """ GPT Language Model """
 
+    """
+    這是一個 PyTorch 的 GPT 語言模型，用於自然語言處理的應用。：
+
+    1. get_default_config(): 回傳一個字典，包含這個模型預設的參數。
+    2. __init__(self, config): 建立模型。輸入的 config 包含模型的參數，其中 vocab_size 和 block_size 是必要的參數。這個方法建立一個 Transformer 的網路結構，並且有一個 linear layer (lm_head) 做為輸出，用來預測下一個字。
+    3. from_pretrained(cls, model_type): 載入已經訓練好的 GPT 模型，並且使用載入的參數初始化新的模型。該方法呼叫 huggingface/transformers 的函式，從事載入、初始化的工作。
+    """
     @staticmethod
     def get_default_config():
         C = CN()
@@ -218,6 +266,21 @@ class GPT(nn.Module):
         We are separating out all parameters of the model into two buckets: those that will experience
         weight decay for regularization and those that won't (biases, and layernorm/embedding weights).
         We are then returning the PyTorch optimizer object.
+
+        
+        此函數將模型的所有參數分成兩個桶：一個桶會經歷權重衰減(weight decay)進行正則化，另一個桶不會
+        (包括偏置和層規範化/嵌入權重)。然後，它將返回 PyTorch 優化器物件。函數內容包含以下幾個步驟：
+
+        首先，它通過遍歷模型的每個模塊及其參數，將所有參數分成兩個集合：需要權重衰減的參數集合和不需要
+        權重衰減的參數集合。
+        
+        接下來，它驗證是否考慮了每個參數，並確保沒有參數同時在兩個集合中出現。
+        
+        最後，它使用這些集合中的參數，創建一個 PyTorch 優化器物件(AdamW)，其中需要權重衰減的參數使用
+        weight_decay參數進行正則化，不需要權重衰減的參數設置 weight_decay 參數為 0。
+
+        此函數使用了PyTorch深度學習框架的常用優化技巧，可以通過對權重的調節來進行正則化，進而提高模型
+        的泛化性能。
         """
 
         # separate out all parameters to those that will and won't experience regularizing weight decay
@@ -257,7 +320,17 @@ class GPT(nn.Module):
         optimizer = torch.optim.AdamW(optim_groups, lr=train_config.learning_rate, betas=train_config.betas)
         return optimizer
 
+
     def forward(self, idx, targets=None):
+        """
+        這段程式是一個 PyTorch 模型的前向傳播函式，該模型使用 GPT (Generative Pre-trained Transformer) 
+        的架構。此函式的輸入是一個由整數索引構成的張量 idx，形狀為 (b, t)，其中 b 是批次大小，t 是每個
+        序列的長度。如果給定了 targets 張量，代表需要計算損失，否則只回傳 logits 張量。程式中會先檢查 t 
+        是否超過預設的 block_size，如果是就會拋出例外。然後會計算位置編碼的張量 pos，與 token embedding 
+        張量 tok_emb 和位置 embedding 張量 pos_emb 相加後，經過經過一些 Transformer block，最後輸出 
+        logits 張量。如果有 targets 張量，則會使用 F.cross_entropy 函式計算交叉熵損失。最後回傳 logits 
+        張量和 loss 張量。
+        """
         device = idx.device
         b, t = idx.size()
         assert t <= self.block_size, f"Cannot forward sequence of length {t}, block size is only {self.block_size}"
@@ -285,6 +358,14 @@ class GPT(nn.Module):
         Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
         the sequence max_new_tokens times, feeding the predictions back into the model each time.
         Most likely you'll want to make sure to be in model.eval() mode of operation for this.
+
+        这是一个用于生成文本的函数，它采用了GPT模型的输出来生成新的token序列。该函数采用一个已知的
+        token序列idx，然后在其中添加max_new_tokens个新的token，直到生成的新token序列的长度达到指定
+        的max_new_tokens。函数的主要参数包括temperature、do_sample和top_k，这些参数控制了如何从
+        GPT模型的输出中采样token，以及采样的数量。temperature控制了token采样时所使用的温度值，
+        它可以控制token的随机性和多样性。do_sample参数控制是否使用采样的方式获取下一个token，
+        如果为False，则使用概率最大的token。top_k参数控制从模型的输出中选择概率最大的k个token。
+        函数的输出是一个新的token序列。
         """
         for _ in range(max_new_tokens):
             # if the sequence context is growing too long we must crop it at block_size

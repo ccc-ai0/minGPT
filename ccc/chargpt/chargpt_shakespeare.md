@@ -1,15 +1,14 @@
-
-原版沒有改過的 chargpt.py 之執行結果
+# 莎士比亞
 
 ```
-$ python chargpt.py
+$ python chargpt.py shakespeare
 system:
     seed: 3407
     work_dir: ./out/chargpt
 data:
     block_size: 128
 model:
-    model_type: gpt-mini
+    model_type: gpt-nano
     n_layer: None
     n_head: None
     n_embd: None
@@ -29,8 +28,9 @@ trainer:
     grad_norm_clip: 1.0
 
 data has 1115393 characters, 65 unique.
-number of parameters: 2.71M
+number of parameters: 0.09M
 running on device cpu
+ccc: trainer running ....
 iter_dt 0.00ms; iter 0: train loss 4.18694
 O God, O God!ry o e  eerystt orsouoir te  eLAiou sno treeaeonoe oyiiy  t   trrss  tmn oo in syeotnte ae th syth tr oy oooomroo  ia etne stst i eaoraoeote yntto  one anoters attae orses  t am i o yr sesmt ort it ny tsmo  sor so ydnsassnse rata r oe ee ss eee e tth oentrote oo rteoro t te t nAyy t s n ntoneeoe t iy athsyanemme otn ia nast onnteey ts  tsaimtoot s orJoryowamyth tt tytr   st erJar    oonAyere nsmene eoaety ar  omy  o o or emyd  o  too ens anee oa tonAyeet the st o sn tor itrnAoayt ir t rnotmyet s
 saving model
